@@ -1,5 +1,4 @@
 from config import *
-import math
 
 class Body:
     def __init__(self, x, y, mass, radius, color, vx=0, vy=0):

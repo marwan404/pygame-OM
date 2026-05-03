@@ -55,10 +55,9 @@ while running:
 
     screen.fill("black")
     
-    # Update and Draw
+    # Draw
     for b in bodies:
         pygame.draw.circle(screen, b.color, b.translatePoint(Planet), b.translateRadius())
-        
         b.update_trail()
         draw_trail(b, Planet)
 
