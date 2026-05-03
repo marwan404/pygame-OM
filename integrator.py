@@ -40,7 +40,7 @@ class Integrator:
                 min_dist = body_a.radius + body_b.radius
                 
                 if dist_sq <= min_dist**2:
-                    # 1. Choose the bigger
+                    # 1. Choose the bigger one
                     winner, loser = (body_a, body_b) if body_a.mass >= body_b.mass else (body_b, body_a)
                     
                     # 2. Conserve Momentum: v_new = (m1v1 + m2v2) / (m1 + m2)
