@@ -38,6 +38,10 @@ planet_vy = -total_m_vy / Planet_Mass
 Planet = Body(0, 0, Planet_Mass, Planet_Radius, "blue", 0, planet_vy)
 bodies = [Planet] + Satellites
 
+def generate_random_system():
+    # code to generate random system instead of having to manualy type ts myself! 
+    pass
+
 def draw_trail(b, planet_ref):
     if len(b.points) > 1:
         screen_pts = [b.translate_coords(p[0], p[1], planet_ref) for p in b.points]
