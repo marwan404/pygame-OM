@@ -132,7 +132,7 @@ mode = int(input("type 1 for euler and type 2 for verlet: "))
 debug = int(input("enter 1 for debug mode lines and enter 0 for normal mode: "))
 
 bodies = generate_random_system()
-Star = bodies[0]
+Star = max(bodies, key=lambda b: b.mass) #star is whatever is the heaviest
 
 if mode == 1:
     sim = EulerIntegrator(G)
@@ -157,9 +157,9 @@ while running:
                 dt *= 2.0
             # Zoom
             elif event.key == pygame.K_i:
-                mpp *= 1.2 # Zoom out (more meters per pixel)
-            elif event.key == pygame.K_o:
                 mpp *= 0.8 # Zoom in
+            elif event.key == pygame.K_o:
+                mpp *= 1.2 # Zoom out
 
     # 1. Physics Sub-stepping
     sub = 10 
