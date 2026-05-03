@@ -1,5 +1,6 @@
 import pygame
 from body import Body
+from integrator import EulerIntegrator, VerletIntegrator
 from config import *
 
 # pygame setup
@@ -37,6 +38,11 @@ def draw_trail(b, planet_ref):
 
 mode = int(input("type 1 for euler and type 2 for verlet: "))
 
+if mode == 1:
+    sim = EulerIntegrator(G)
+else:
+    sim = VerletIntegrator(G)
+
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -45,12 +51,7 @@ while running:
     # Physics Sub-stepping
     SUB_STEPS = 10 
     for _ in range(SUB_STEPS):
-            if mode == 2:
-                for b in bodies:
-                    b.simulate_verlet(bodies, DT / SUB_STEPS, G)
-            else:
-                for b in bodies:
-                    b.simulate_euler(bodies, DT / SUB_STEPS, G)
+        sim.step(bodies, DT / SUB_STEPS)
 
     screen.fill("black")
     
