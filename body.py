@@ -10,7 +10,7 @@ class Body:
         self.mass = mass
         self.radius = radius
         self.color = color
-        self.points = []
+        self.points = deque(maxlen=750)
 
     def translate_coords(self, wx, wy, planet_ref):
         sx = ((wx - planet_ref.x) / MPP) + (W/2)
@@ -25,4 +25,3 @@ class Body:
     
     def update_trail(self):
         self.points.append((self.x, self.y))
-        self.points = deque(maxlen=750)
