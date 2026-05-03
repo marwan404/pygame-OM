@@ -2,7 +2,7 @@ class Integrator:
     def __init__(self, G):
         self.G = G
 
-    def get_differences(body, other):
+    def get_differences(self, body, other):
         dx = other.x - body.x
         dy = other.y - body.y
 
