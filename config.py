@@ -6,5 +6,5 @@ H = 1020
 
 # global variables
 G = 1000
-DT = 1/6
-MPP = 10
+DT = 1/2
+MPP = 50

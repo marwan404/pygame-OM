@@ -18,11 +18,6 @@ class Integrator:
             r_sq = dx*dx + dy*dy + epsilon**2
             r = r_sq**0.5
 
-            # collision check
-            if r <= body.radius + other.radius:
-                # idk what to do here so ill leave it empty ig
-                continue
-
             a = self.G * (other.mass / r_sq)
 
             total_ax += a * (dx / r)
@@ -30,9 +25,41 @@ class Integrator:
 
         return total_ax, total_ay
     
+    def resolve_collisions(self, bodies):
+        to_remove = set()
+        
+        for i, body_a in enumerate(bodies):
+            if body_a in to_remove: continue
+            
+            for body_b in bodies[i+1:]:
+                if body_b in to_remove: continue
+                
+                dx = body_b.x - body_a.x
+                dy = body_b.y - body_a.y
+                dist_sq = dx*dx + dy*dy
+                min_dist = body_a.radius + body_b.radius
+                
+                if dist_sq <= min_dist**2:
+                    # 1. Choose the bigger
+                    winner, loser = (body_a, body_b) if body_a.mass >= body_b.mass else (body_b, body_a)
+                    
+                    # 2. Conserve Momentum: v_new = (m1v1 + m2v2) / (m1 + m2)
+                    total_mass = winner.mass + loser.mass
+                    winner.vx = (winner.mass * winner.vx + loser.mass * loser.vx) / total_mass
+                    winner.vy = (winner.mass * winner.vy + loser.mass * loser.vy) / total_mass
+                    
+                    # 3. Absorb mass
+                    winner.mass = total_mass
+                    winner.radius = (winner.radius**2 + loser.radius**2)**0.5
+                    
+                    to_remove.add(loser)
+
+        # Return only the survivors
+        return [b for b in bodies if b not in to_remove]
+    
 class EulerIntegrator(Integrator):
     def step(self, bodies, dt):
-        # 1. Get all accelerations first (Simultaneous update)
+        # 1. Get all accelerations first
         a = [self.get_acceleration(b, bodies) for b in bodies]
         
         # 2. Apply to bodies
