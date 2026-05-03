@@ -1,44 +1,33 @@
+# contains the physics
+
 class Integrator:
     def __init__(self, G):
         self.G = G
 
-    @staticmethod
-    def get_differences(body, other):
-        dx = other.x - body.x
-        dy = other.y - body.y
-
-        return dx, dy
-
-    def get_distances(self, body, others):
-        distances = []
-        for other in others:
-            if other is body: 
-                distances.append(0)  
-                continue
-            
-            dx, dy = self.get_differences(body, other)
-
-            r_sq = pow(dx, 2) + pow(dy, 2)
-            distances.append(r_sq)
-        
-        return distances
-
     def get_acceleration(self, body, others):
         total_ax, total_ay = 0, 0
-        distances = self.get_distances(body, others)
-        for i, other in enumerate(others):
+        epsilon = 0.1
+
+        for other in others:
             if other is body:
                 continue
 
-            dx, dy = self.get_differences(body, other)
+            dx = other.x - body.x
+            dy = other.y - body.y
 
-            r = max(pow(distances[i], 0.5), 0.1) # Softening to prevent div by zero
+            r_sq = dx*dx + dy*dy + epsilon**2
+            r = r_sq**0.5
 
-            # a = G * M / r^2
-            a = self.G * (other.mass / distances[i])
+            # collision check
+            if r <= body.radius + other.radius:
+                # idk what to do here so ill leave it empty ig
+                continue
+
+            a = self.G * (other.mass / r_sq)
+
             total_ax += a * (dx / r)
             total_ay += a * (dy / r)
-            
+
         return total_ax, total_ay
     
 class EulerIntegrator(Integrator):

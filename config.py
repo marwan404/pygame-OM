@@ -1,4 +1,4 @@
-#contains global variables
+# contains global variables
 
 # screen configs
 W = 1900

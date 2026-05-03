@@ -1,3 +1,5 @@
+# contains the main game loop
+
 import pygame
 from body import Body
 from integrator import EulerIntegrator, VerletIntegrator
@@ -5,7 +7,6 @@ from config import *
 
 # pygame setup
 pygame.init()
-screen = pygame.display.set_mode((W,H))
 clock = pygame.time.Clock()
 running = True
 
@@ -42,6 +43,8 @@ if mode == 1:
     sim = EulerIntegrator(G)
 else:
     sim = VerletIntegrator(G)
+
+screen = pygame.display.set_mode((W,H))
 
 while running:
     for event in pygame.event.get():

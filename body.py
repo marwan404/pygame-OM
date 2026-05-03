@@ -1,4 +1,7 @@
+# contains the body class
+
 from config import *
+from collections import deque
 
 class Body:
     def __init__(self, x, y, mass, radius, color, vx=0, vy=0):
@@ -22,5 +25,4 @@ class Body:
     
     def update_trail(self):
         self.points.append((self.x, self.y))
-        if len(self.points) > 1500:
-            self.points.pop(0)
+        self.points = deque(maxlen=750)
