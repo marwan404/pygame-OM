@@ -1,4 +1,4 @@
-# N-Body Orbital Physics Engine
+# N-Body Orbital Physics Simulator
 
 ![Image of stable system](screenshots/stable-system.png)
 
@@ -60,6 +60,10 @@ $$v_{final} = \frac{m_1v_1 + m_2v_2}{m_1 + m_2}$$
 ### Debug lines
 
 * (**1**) to toggle
+
+### Fullscreen
+
+* (**F**) to toggle
 
 ---
 

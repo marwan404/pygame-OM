@@ -12,13 +12,13 @@ class Body:
         self.color = color
         self.points = deque(maxlen=750)
 
-    def translate_coords(self, wx, wy, mpp, star_ref):
+    def translate_coords(self, wx, wy, mpp, W, H, star_ref):
         sx = ((wx - star_ref.x) / mpp) + (W/2)
         sy = (H/2) - ((wy - star_ref.y) / mpp)
         return (sx, sy)
     
-    def translatePoint(self, mpp, star_ref):
-        return self.translate_coords(self.x, self.y, mpp, star_ref)
+    def translatePoint(self, mpp, W, H, star_ref):
+        return self.translate_coords(self.x, self.y, mpp, W, H, star_ref)
     
     def translateRadius(self, mpp):
         return self.radius / mpp

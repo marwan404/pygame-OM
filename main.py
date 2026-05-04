@@ -3,7 +3,6 @@
 import pygame
 import random
 import math
-import sys
 from body import Body
 from integrator import EulerIntegrator, VerletIntegrator
 from config import *
@@ -17,6 +16,9 @@ running = True
 
 dt = 1/2
 mpp = 100
+
+W = pygame.display.Info().current_w
+H = pygame.display.Info().current_h
 
 STAR_COLORS = [
     (255, 94, 0), 
@@ -95,8 +97,8 @@ def generate_random_system():
 
 def draw_trail(b, Star_ref):
     if len(b.points) > 1:
-        screen_pts = [b.translate_coords(p[0], p[1], mpp, Star_ref) for p in b.points]
-        pygame.draw.lines(screen, b.color if b != Star else "white", False, screen_pts, 1)
+        screen_pts = [b.translate_coords(p[0], p[1], mpp, W, H, Star_ref) for p in b.points]
+        pygame.draw.lines(screen, b.color if b != Star else "white", False, screen_pts)
 
 def get_barycenter(bodies):
     total_mass = 0
@@ -114,17 +116,17 @@ def get_barycenter(bodies):
 
 def draw_debug():
     bx_w, by_w = get_barycenter(bodies)
-    bx_s, by_s = Star.translate_coords(bx_w, by_w, mpp, Star)
+    bx_s, by_s = Star.translate_coords(bx_w, by_w, mpp, W, H, Star)
     pygame.draw.circle(screen, "yellow", (int(bx_s), int(by_s)), 4)
     
     for i, body_a in enumerate(bodies):
-        pos_a = body_a.translatePoint(mpp, Star)
+        pos_a = body_a.translatePoint(mpp, W, H, Star)
         # Line to barycenter
         pygame.draw.line(screen, (150, 150, 100), (bx_s, by_s), pos_a, 1)
         
         # Line to other bodies (only once per pair)
         for body_b in bodies[i+1:]: 
-            pos_b = body_b.translatePoint(mpp, Star)
+            pos_b = body_b.translatePoint(mpp, W, H, Star)
             pygame.draw.line(screen, (100, 100, 80), pos_a, pos_b, 1)
 
 # b4 gameloop prep
@@ -139,7 +141,11 @@ if mode == 1:
 else:
     sim = VerletIntegrator(G)
 
-screen = pygame.display.set_mode((W,H))
+fullscreen = True
+screen = pygame.display.set_mode((W,H), pygame.RESIZABLE | pygame.FULLSCREEN | pygame.HWACCEL | pygame.HWSURFACE)
+icon = pygame.image.load("screenshots/binary-system-orbitting-barycenter.png")
+pygame.display.set_icon(icon)
+pygame.display.set_caption("orbital simulation")
 
 if debug == 1 and len(bodies) > 0:
     draw_debug()
@@ -148,7 +154,9 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        
+
+        if event.type == pygame.VIDEORESIZE:
+            W, H = pygame.display.get_surface().get_size()
         if event.type == pygame.KEYDOWN:
             # Time warp
             if event.key == pygame.K_COMMA:
@@ -166,6 +174,13 @@ while running:
                     debug = 0
                 else:
                     debug = 1
+            # Press 'F' to toggle fullscreen
+            elif event.key == pygame.K_f: 
+                fullscreen = not fullscreen
+                if fullscreen:
+                    screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+                else:
+                    screen = pygame.display.set_mode((800, 600), pygame.RESIZABLE)
 
     # 1. Physics Sub-stepping
     sub = 10 
@@ -183,7 +198,7 @@ while running:
 
     # 4. Draw Bodies and Trails
     for b in bodies:
-        sx, sy = b.translatePoint(mpp, Star)
+        sx, sy = b.translatePoint(mpp, W, H, Star)
         
         # Proper on-screen check (adds a 100px buffer so large planets don't pop out)
         if -100 <= sx <= W + 100 and -100 <= sy <= H + 100:
