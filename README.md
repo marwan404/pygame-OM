@@ -1,7 +1,5 @@
 # N-Body Orbital Physics Engine
 
-> *A procedurally generated, physics-accurate solar system simulation built from scratch in Python.*
-
 ![Image of stable system](screenshots/stable-system.png)
 
 ---
@@ -44,3 +42,36 @@ When celestial bodies collide, they do not just disappear; they merge. The engin
 * **Conservation of Momentum:** The new velocity of the merged body is calculated precisely using the masses and velocities of the original bodies:
 $$v_{final} = \frac{m_1v_1 + m_2v_2}{m_1 + m_2}$$
 * **Area Conservation:** Because the simulation runs in 2D space, adding the radii of two colliding bodies directly would result in an exponentially massive new planet. Instead, the engine conserves the 2D cross-sectional area ($\pi r^2$) by calculating the new radius using the Pythagorean theorem: `(r1**2 + r2**2)**0.5`.
+
+---
+
+## Key Bindings
+
+### Zoom
+
+* (**I**) to zoom in
+* (**O**) to zoom out
+
+### Timewarp
+
+* (**,**) to slow time
+* (**.**) to speed up
+
+### Debug lines
+
+* (**1**) to toggle
+
+---
+
+## How to use?
+
+Clone the repo then run `pip install -r requirements.txt`.
+
+---
+
+## Future plans
+
+* Ability to save and load solar systems
+* Some UI
+* More Integrators (RK4 for example)
+* Custom user generated solar systems
