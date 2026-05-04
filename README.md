@@ -2,10 +2,7 @@
 
 > *A procedurally generated, physics-accurate solar system simulation built from scratch in Python.*
 
-!
-
-[Image of stable system]
-(screenshots/stable-system.png)
+![Image of stable system](screenshots/stable-system.png)
 
 ---
 
