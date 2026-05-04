@@ -59,8 +59,8 @@ def generate_random_system():
 
     # PLANETS
     for _ in range(n - 1):
-        mass = random.randint(300, 7500)
-        radius = mass / 10
+        mass = random.uniform(star_mass * 0.0001, star_mass * 0.01)
+        radius = mass
 
         # generate well-spaced orbit radius
         too_close = True
@@ -160,6 +160,12 @@ while running:
                 mpp *= 0.8 # Zoom in
             elif event.key == pygame.K_o:
                 mpp *= 1.2 # Zoom out
+            # debug mode
+            elif event.key == pygame.K_1:
+                if debug == 1:
+                    debug = 0
+                else:
+                    debug = 1
 
     # 1. Physics Sub-stepping
     sub = 10 
