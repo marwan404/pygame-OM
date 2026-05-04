@@ -9,5 +9,6 @@ It also handels N-body physics with plug and play integrators (currently only eu
 
 # Best features:
   *True N-Body Gravity:* Every celestial body exerts gravitational force on every other body in the system.
+  
   *Physics-Based Procedural Generation:* Generates random solar systems with strict rules (like minimum orbital spacing/Hill     spheres and strict mass ratios). This is to prevent the system from turning int a binary one instantly!
    
