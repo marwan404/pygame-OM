@@ -1,6 +1,7 @@
 # contains the main game loop
 
 import pygame
+import pygame.gfxdraw
 import random
 import math
 from body import Body
@@ -19,6 +20,9 @@ mpp = 100
 
 W = pygame.display.Info().current_w
 H = pygame.display.Info().current_h
+
+scale = 2
+render_surface = pygame.Surface((W * scale, H * scale))
 
 STAR_COLORS = [
     (255, 94, 0), 
@@ -97,8 +101,20 @@ def generate_random_system():
 
 def draw_trail(b, Star_ref):
     if len(b.points) > 1:
-        screen_pts = [b.translate_coords(p[0], p[1], mpp, W, H, Star_ref) for p in b.points]
-        pygame.draw.lines(screen, b.color if b != Star else "white", False, screen_pts)
+        screen_pts = [
+            b.translate_coords(p[0], p[1], mpp, W, H, Star_ref)
+            for p in b.points
+        ]
+
+        # scale points
+        screen_pts = [(x * scale, y * scale) for (x, y) in screen_pts]
+
+        pygame.draw.aalines(
+            render_surface,
+            b.color if b != Star else "white",
+            False,
+            screen_pts
+        )
 
 def get_barycenter(bodies):
     total_mass = 0
@@ -117,17 +133,25 @@ def get_barycenter(bodies):
 def draw_debug():
     bx_w, by_w = get_barycenter(bodies)
     bx_s, by_s = Star.translate_coords(bx_w, by_w, mpp, W, H, Star)
-    pygame.draw.circle(screen, "yellow", (int(bx_s), int(by_s)), 4)
-    
+
+    bx_s *= scale
+    by_s *= scale
+
+    pygame.gfxdraw.filled_circle(render_surface, int(bx_s), int(by_s), 4 * scale, (255, 255, 0))
+    pygame.gfxdraw.aacircle(render_surface, int(bx_s), int(by_s), 4 * scale, (255, 255, 0))
+
     for i, body_a in enumerate(bodies):
         pos_a = body_a.translatePoint(mpp, W, H, Star)
+        pos_a = (pos_a[0] * scale, pos_a[1] * scale)
+
         # Line to barycenter
-        pygame.draw.line(screen, (150, 150, 100), (bx_s, by_s), pos_a, 1)
-        
-        # Line to other bodies (only once per pair)
-        for body_b in bodies[i+1:]: 
+        pygame.draw.aaline(render_surface, (150, 150, 100), (bx_s, by_s), pos_a)
+
+        for body_b in bodies[i+1:]:
             pos_b = body_b.translatePoint(mpp, W, H, Star)
-            pygame.draw.line(screen, (100, 100, 80), pos_a, pos_b, 1)
+            pos_b = (pos_b[0] * scale, pos_b[1] * scale)
+
+            pygame.draw.aaline(render_surface, (100, 100, 80), pos_a, pos_b)
 
 # b4 gameloop prep
 mode = int(input("type 1 for euler and type 2 for verlet: "))
@@ -147,9 +171,6 @@ icon = pygame.image.load("screenshots/binary-system-orbitting-barycenter.png")
 pygame.display.set_icon(icon)
 pygame.display.set_caption("orbital simulation")
 
-if debug == 1 and len(bodies) > 0:
-    draw_debug()
-
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -157,6 +178,7 @@ while running:
 
         if event.type == pygame.VIDEORESIZE:
             W, H = pygame.display.get_surface().get_size()
+            render_surface = pygame.Surface((W * scale, H * scale))
         if event.type == pygame.KEYDOWN:
             # Time warp
             if event.key == pygame.K_COMMA:
@@ -187,7 +209,7 @@ while running:
     for _ in range(sub):
         sim.step(bodies, dt / sub)
 
-    screen.fill("black")
+    render_surface.fill("black")
 
     # 2. Update survivors
     bodies = sim.resolve_collisions(bodies)
@@ -199,18 +221,24 @@ while running:
     # 4. Draw Bodies and Trails
     for b in bodies:
         sx, sy = b.translatePoint(mpp, W, H, Star)
-        
-        # Proper on-screen check (adds a 100px buffer so large planets don't pop out)
-        if -100 <= sx <= W + 100 and -100 <= sy <= H + 100:
+
+        # scale position
+        sx *= scale
+        sy *= scale
+
+        if -100*scale <= sx <= W*scale + 100*scale and -100*scale <= sy <= H*scale + 100*scale:
             
-            # Prevent Pygame crash if zooming out makes radius < 1
-            drawn_radius = max(1, int(b.translateRadius(mpp)))
-            pygame.draw.circle(screen, b.color, (sx, sy), drawn_radius)
+            drawn_radius = max(1, int(b.translateRadius(mpp) * scale))
+
+            pygame.gfxdraw.filled_circle(render_surface, int(sx), int(sy), drawn_radius, b.color)
+            pygame.gfxdraw.aacircle(render_surface, int(sx), int(sy), drawn_radius, b.color)
 
         # Update trails regardless of screen position so they don't break when off-screen
         b.update_trail()
         draw_trail(b, Star)
 
+    smooth = pygame.transform.smoothscale(render_surface, (W, H))
+    screen.blit(smooth, (0, 0))
     pygame.display.flip()
     clock.tick(60)
 
