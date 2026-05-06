@@ -1,7 +1,7 @@
 from config import *
 import random
 from body import Body
-from math import math
+import math
 
 
 def generate_random_system():
