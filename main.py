@@ -57,10 +57,8 @@ while running:
             W, H = pygame.display.get_surface().get_size()
             render_surface = pygame.Surface((W * scale, H * scale))
             ctx.surface = render_surface
-            ioctx.W = W
-            ioctx.H = H
-            ctx.W = W
-            ctx.H = H
+            ioctx.W, ctx.W = W, W
+            ioctx.H, ctx.H = H, H
 
         if event.type == pygame.KEYDOWN:
             action = key_actions.get(event.key)

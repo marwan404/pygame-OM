@@ -1,30 +1,34 @@
-# contains the physics
+import numpy as np
+from numba import njit
+
+
+@njit
+def get_accelerations(x, y, mass, G):
+    n = len(x)
+    ax = np.zeros(n)
+    ay = np.zeros(n)
+    epsilon_sq = 0.1**2
+
+    for i in range(n):
+        for j in range(n):
+            if i == j:
+                continue
+            
+            dx = x[j] - x[i]
+            dy = y[j] - y[i]
+            r_sq = dx*dx + dy*dy + epsilon_sq
+            r = r_sq**0.5
+            
+            f = G * mass[j] / r_sq
+            ax[i] += f * (dx / r)
+            ay[i] += f * (dy / r)
+            
+    return ax, ay
 
 
 class Integrator:
     def __init__(self, G):
         self.G = G
-
-    def get_acceleration(self, body, others):
-        total_ax, total_ay = 0, 0
-        epsilon = 0.1
-
-        for other in others:
-            if other is body:
-                continue
-
-            dx = other.x - body.x
-            dy = other.y - body.y
-
-            r_sq = dx * dx + dy * dy + epsilon**2
-            r = r_sq**0.5
-
-            a = self.G * (other.mass / r_sq)
-
-            total_ax += a * (dx / r)
-            total_ay += a * (dy / r)
-
-        return total_ax, total_ay
 
     def resolve_collisions(self, bodies):
         to_remove = set()
@@ -43,79 +47,85 @@ class Integrator:
                 min_dist = body_a.radius + body_b.radius
 
                 if dist_sq <= min_dist**2:
-                    # 1. Choose the bigger one
                     winner, loser = (
                         (body_a, body_b)
                         if body_a.mass >= body_b.mass
                         else (body_b, body_a)
                     )
 
-                    # 2. Conserve Momentum: v_new = (m1v1 + m2v2) / (m1 + m2)
                     total_mass = winner.mass + loser.mass
-                    winner.vx = (
-                        winner.mass * winner.vx + loser.mass * loser.vx
-                    ) / total_mass
-                    winner.vy = (
-                        winner.mass * winner.vy + loser.mass * loser.vy
-                    ) / total_mass
+                    winner.vx = (winner.mass * winner.vx + loser.mass * loser.vx) / total_mass
+                    winner.vy = (winner.mass * winner.vy + loser.mass * loser.vy) / total_mass
 
-                    # 3. Absorb mass
                     winner.mass = total_mass
                     winner.radius = (winner.radius**2 + loser.radius**2) ** 0.5
 
                     to_remove.add(loser)
 
-        # Return only the survivors
         return [b for b in bodies if b not in to_remove]
+
 
     @staticmethod
     def get_barycenter(bodies):
-        total_mass = 0
-        sum_mx = 0
-        sum_my = 0
-
-        for body in bodies:
-            total_mass += body.mass
-            sum_mx += body.mass * body.x
-            sum_my += body.mass * body.y
-
-        if total_mass == 0:
-            return (0, 0)
-
+        total_mass = sum(b.mass for b in bodies)
+        if total_mass == 0: return (0, 0)
+        
+        sum_mx = sum(b.mass * b.x for b in bodies)
+        sum_my = sum(b.mass * b.y for b in bodies)
+        
         return (sum_mx / total_mass, sum_my / total_mass)
 
 
 class EulerIntegrator(Integrator):
     def step(self, bodies, dt):
-        # 1. Get all accelerations first
-        a = [self.get_acceleration(b, bodies) for b in bodies]
+        n = len(bodies)
+        if n == 0: return
+        
+        # 1. Extract data to NumPy arrays
+        x = np.array([b.x for b in bodies])
+        y = np.array([b.y for b in bodies])
+        mass = np.array([b.mass for b in bodies])
 
-        # 2. Apply to bodies
+        # 2. get accelerations
+        ax, ay = get_accelerations(x, y, mass, self.G)
+
+        # 3. Apply back to objects
         for i, b in enumerate(bodies):
-            ax, ay = a[i]
-            b.vx += ax * dt
-            b.vy += ay * dt
+            b.vx += ax[i] * dt
+            b.vy += ay[i] * dt
             b.x += b.vx * dt
             b.y += b.vy * dt
 
 
 class VerletIntegrator(Integrator):
     def step(self, bodies, dt):
-        # 1. Get initial accelerations
-        a_t = [self.get_acceleration(b, bodies) for b in bodies]
+        n = len(bodies)
+        if n == 0: return
 
-        # 2. Half-step position update for all
+        # extract data to numpy arrays
+        x = np.array([b.x for b in bodies], dtype=np.float64)
+        y = np.array([b.y for b in bodies], dtype=np.float64)
+        vx = np.array([b.vx for b in bodies], dtype=np.float64)
+        vy = np.array([b.vy for b in bodies], dtype=np.float64)
+        mass = np.array([b.mass for b in bodies], dtype=np.float64)
+
+        # initial accelerations
+        ax_t, ay_t = get_accelerations(x, y, mass, self.G)
+
+        # half step position update
+        x += (vx * dt) + (0.5 * ax_t * (dt**2))
+        y += (vy * dt) + (0.5 * ay_t * (dt**2))
+
+        # new accelerations at new positions
+        ax_n, ay_n = get_accelerations(x, y, mass, self.G)
+
+        # correct velocities
+        vx += 0.5 * (ax_t + ax_n) * dt
+        vy += 0.5 * (ay_t + ay_n) * dt
+
+        # update the object
         for i, b in enumerate(bodies):
-            ax_t, ay_t = a_t[i]
-            b.x += (b.vx * dt) + (0.5 * ax_t * (dt**2))
-            b.y += (b.vy * dt) + (0.5 * ay_t * (dt**2))
-
-        # 3. Get new accelerations at the new positions
-        a_next = [self.get_acceleration(b, bodies) for b in bodies]
-
-        # 4. Correct velocities for all
-        for i, b in enumerate(bodies):
-            ax_t, ay_t = a_t[i]
-            ax_n, ay_n = a_next[i]
-            b.vx += 0.5 * (ax_t + ax_n) * dt
-            b.vy += 0.5 * (ay_t + ay_n) * dt
+            b.x = x[i]
+            b.y = y[i]
+            b.vx = vx[i]
+            b.vy = vy[i]
